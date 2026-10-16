@@ -1,0 +1,56 @@
+{
+  "output_mode": {
+    "description": "输出方式",
+    "type": "string",
+    "options": [
+      "text",
+      "image"
+    ],
+    "default": "text",
+    "hint": "text：以纯文字消息发送查询结果；image：渲染成图片发送（渲染失败时自动回退为文字）。"
+  },
+  "render_engine": {
+    "description": "图片渲染方式",
+    "type": "string",
+    "options": [
+      "local",
+      "html"
+    ],
+    "default": "local",
+    "hint": "local：插件内置本地渲染，毫秒级完成、不依赖任何外部服务（推荐）；html：使用 AstrBot 的文转图服务渲染 HTML 卡片，速度取决于渲染服务，通常慢很多。"
+  },
+  "query_timeout": {
+    "description": "查询超时时间（秒）",
+    "type": "int",
+    "slider": {
+      "min": 1,
+      "max": 30,
+      "step": 1
+    },
+    "default": 5,
+    "hint": "单个服务器的最大等待时间。超时后会提示服务器未响应。"
+  },
+  "max_servers_per_session": {
+    "description": "每个群聊可添加的服务器上限",
+    "type": "int",
+    "slider": {
+      "min": 1,
+      "max": 50,
+      "step": 1
+    },
+    "default": 10,
+    "hint": "限制单个群聊（或私聊会话）能保存的服务器数量，防止滥用。"
+  },
+  "show_player_list": {
+    "description": "显示在线玩家名单",
+    "type": "bool",
+    "default": true,
+    "hint": "开启后，若服务器返回了玩家样例列表，会在结果中一并显示。"
+  },
+  "allow_srv_lookup": {
+    "description": "启用 DNS SRV 记录解析",
+    "type": "bool",
+    "default": true,
+    "hint": "开启后，对于未显式指定端口的域名会尝试查询 _minecraft._tcp SRV 记录（需要安装 dnspython，未安装时自动跳过）。"
+  }
+}

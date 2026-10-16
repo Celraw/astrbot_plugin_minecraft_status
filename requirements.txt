@@ -1,0 +1,6 @@
+# 本地图片渲染需要 Pillow（AstrBot 已自带，无需额外安装）。
+Pillow>=9.0.0
+
+# html 渲染引擎使用 AstrBot 自带的 aiohttp，无需在此声明。
+# 若需要 DNS SRV 记录解析（allow_srv_lookup），可额外安装 dnspython：
+# dnspython>=2.0.0

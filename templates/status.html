@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<!--
+  性能优化：AstrBot 的文转图服务默认会向模板注入约 1.2MB 的 Shiki 代码高亮
+  运行时（astrbot-t2i-shiki-runtime），使每次渲染的请求体膨胀 200 倍以上。
+  本卡片不含任何代码块，不需要语法高亮；下方这个标记会让 AstrBot 跳过注入。
+  若该标记失效（例如 AstrBot 更换了内部标识），仅会退化为「较慢」，不影响正确性。
+-->
+<!-- astrbot-t2i-shiki-runtime -->
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", sans-serif;
+    background: linear-gradient(135deg, #1b2a3a 0%, #0f1b26 100%);
+    color: #e8eef4;
+    padding: 22px;
+    width: fit-content;
+  }
+  .card {
+    width: 620px;
+    background: rgba(255, 255, 255, 0.045);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 14px;
+    padding: 20px 22px;
+  }
+  .header { display: flex; align-items: center; gap: 14px; }
+  .icon {
+    width: 64px; height: 64px; image-rendering: pixelated;
+    border-radius: 8px; flex: 0 0 auto;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+  .title-group { min-width: 0; flex: 1 1 auto; }
+  .server-name {
+    font-size: 21px; font-weight: 700; color: #ffffff;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .address {
+    font-size: 13px; color: #8fa6ba; margin-top: 4px;
+    font-family: Consolas, "Courier New", monospace;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .badge {
+    flex: 0 0 auto; padding: 6px 14px; border-radius: 999px;
+    font-size: 14px; font-weight: 700; letter-spacing: .5px;
+  }
+  .badge.online { background: #1f7a45; color: #d6ffe7; border: 1px solid #2fbf6b; }
+  .badge.offline { background: #7a2323; color: #ffdede; border: 1px solid #d9534f; }
+
+  .motd {
+    margin-top: 16px; padding: 12px 14px; border-radius: 10px;
+    background: rgba(0, 0, 0, 0.28);
+    border-left: 3px solid #4a9eff;
+    font-size: 14px; line-height: 1.6; color: #d5e2ee;
+    white-space: pre-wrap; word-break: break-word;
+  }
+  .motd.empty { color: #7f93a6; font-style: italic; }
+
+  .players { margin-top: 16px; }
+  .players-bar {
+    height: 9px; border-radius: 999px; background: rgba(255, 255, 255, 0.10);
+    overflow: hidden;
+  }
+  .players-fill {
+    height: 100%; border-radius: 999px;
+    background: linear-gradient(90deg, #2fbf6b, #7ee2a8);
+  }
+  .players-fill.full { background: linear-gradient(90deg, #d98b1f, #f0b955); }
+  .players-fill.offline { background: #5a6b7a; }
+
+  .stats { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+  .stat {
+    flex: 1 1 0; min-width: 108px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px; padding: 10px 12px;
+  }
+  .stat .k { font-size: 11px; color: #8fa6ba; letter-spacing: .5px; }
+  .stat .v {
+    font-size: 15px; color: #ffffff; margin-top: 5px; font-weight: 600;
+    word-break: break-all;
+  }
+
+  .list { margin-top: 18px; border-top: 1px solid rgba(255,255,255,.09); padding-top: 14px; }
+  .list-title { font-size: 13px; color: #8fa6ba; margin-bottom: 9px; letter-spacing: .6px; }
+  .list-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 0; font-size: 14px;
+  }
+  .list-row + .list-row { border-top: 1px dashed rgba(255, 255, 255, 0.07); }
+  .list-name { color: #ffffff; font-weight: 600; flex: 0 0 auto; }
+  .list-tag {
+    font-size: 11px; color: #0f1b26; background: #7ee2a8;
+    border-radius: 4px; padding: 1px 6px; font-weight: 700;
+  }
+  .list-addr {
+    color: #9fb3c6; font-family: Consolas, "Courier New", monospace;
+    font-size: 13px; margin-left: auto; text-align: right; word-break: break-all;
+  }
+  .error {
+    margin-top: 16px; padding: 12px 14px; border-radius: 10px;
+    background: rgba(217, 83, 79, 0.14);
+    border-left: 3px solid #d9534f;
+    font-size: 14px; line-height: 1.6; color: #ffd6d6;
+    white-space: pre-wrap; word-break: break-word;
+  }
+  .footer {
+    margin-top: 16px; padding-top: 11px;
+    border-top: 1px solid rgba(255, 255, 255, 0.09);
+    font-size: 11px; color: #6c8093;
+    display: flex; justify-content: space-between;
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      {% if icon %}<img class="icon" src="{{ icon }}" alt="icon">{% endif %}
+      <div class="title-group">
+        <div class="server-name">{{ title }}</div>
+        <div class="address">{{ address }}</div>
+      </div>
+      <div class="badge {{ 'online' if online else 'offline' }}">
+        {{ '在线' if online else '离线' }}
+      </div>
+    </div>
+
+    {% if online %}
+      <div class="motd{% if not motd %} empty{% endif %}">{{ motd if motd else '（该服务器未设置 MOTD）' }}</div>
+
+      <div class="players">
+        <div class="players-bar">
+          {% set pct = (players_online / players_max * 100) if players_max else 0 %}
+          <div class="players-fill{% if players_max and players_online >= players_max %} full{% endif %}"
+               style="width: {{ [pct, 100] | min if players_max else 0 }}%"></div>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="k">玩家</div>
+          <div class="v">{{ players_online }} / {{ players_max }}</div>
+        </div>
+        <div class="stat">
+          <div class="k">版本</div>
+          <div class="v">{{ version if version else '未知' }}</div>
+        </div>
+        {% if latency_ms is not none %}
+        <div class="stat">
+          <div class="k">延迟</div>
+          <div class="v">{{ latency_ms }} ms</div>
+        </div>
+        {% endif %}
+        {% if protocol is not none %}
+        <div class="stat">
+          <div class="k">协议号</div>
+          <div class="v">{{ protocol }}</div>
+        </div>
+        {% endif %}
+      </div>
+
+      {% if show_players and player_sample %}
+      <div class="list">
+        <div class="list-title">在线玩家（{{ player_sample | length }}）</div>
+        {% for name in player_sample %}
+        <div class="list-row">
+          <span class="list-name">{{ name }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if extra_servers %}
+      <div class="list">
+        <div class="list-title">本群服务器</div>
+        {% for s in extra_servers %}
+        <div class="list-row">
+          <span class="list-name">{{ s.name }}</span>
+          {% if s.default %}<span class="list-tag">默认</span>{% endif %}
+          <span class="list-addr">{{ s.address }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    {% else %}
+      <div class="error">查询失败：{{ error }}</div>
+
+      {% if extra_servers %}
+      <div class="list">
+        <div class="list-title">本群服务器</div>
+        {% for s in extra_servers %}
+        <div class="list-row">
+          <span class="list-name">{{ s.name }}</span>
+          {% if s.default %}<span class="list-tag">默认</span>{% endif %}
+          <span class="list-addr">{{ s.address }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    {% endif %}
+
+    <div class="footer">
+      <span>Minecraft 服务器状态 · 本地 SLP 直连</span>
+      <span>{{ timestamp }}</span>
+    </div>
+  </div>
+</body>
+</html>

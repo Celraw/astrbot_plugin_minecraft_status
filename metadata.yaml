@@ -1,0 +1,22 @@
+name: astrbot_plugin_minecraft_status
+display_name: Minecraft 服务器状态查询
+desc: |
+  查询 Minecraft Java 版服务器在线状态（本地直连 SLP 协议，不依赖任何第三方 API）。
+  支持 /mc 查询默认服务器、/mc add 添加、/mc delete 删除、/mc set 设置默认、
+  /mc list 列出、/mc <名称> 查询指定服务器；每个群聊的服务器数据完全隔离；
+  可在配置文件中选择以文字或渲染图片的方式输出。
+version: 1.0.0
+author: AstrBot
+repo: https://github.com/AstrBotDevs/AstrBot
+astrbot_version: ">=4.0.0"
+support_platforms:
+  - aiocqhttp
+  - qq_official
+  - qq_official_webhook
+  - telegram
+  - discord
+  - slack
+  - lark
+  - dingtalk
+  - webchat
+short_desc: 查询 Minecraft 服务器在线状态，支持多服务器与群聊隔离
